@@ -4,84 +4,86 @@
   <meta charset="UTF-8" />
   <title>Smart Green Grid – Carbon Credit Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="bg-gray-100 font-sans">
 
   <!-- Header -->
-  <header class="bg-green-700 text-white p-5 shadow-md">
+  <header class="bg-green-700 text-white p-5 shadow">
     <h1 class="text-2xl font-bold">Smart Green Grid – Carbon Credit Dashboard</h1>
-    <p class="text-sm opacity-90">Real-time Renewable Energy & Carbon Monitoring</p>
+    <p class="text-sm opacity-90">Live IoT Monitoring via ThingSpeak</p>
   </header>
 
-  <!-- Main -->
-  <main class="p-6">
+  <!-- Dashboard -->
+  <main class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
 
-    <!-- Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <p class="text-gray-500 text-sm">Solar Voltage</p>
-        <h2 class="text-2xl font-bold text-green-700">48 V</h2>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow">
-        <p class="text-gray-500 text-sm">Solar Current</p>
-        <h2 class="text-2xl font-bold text-green-700">12 A</h2>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow">
-        <p class="text-gray-500 text-sm">Power Generation</p>
-        <h2 class="text-2xl font-bold text-green-700">576 W</h2>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow">
-        <p class="text-gray-500 text-sm">CO₂ Reduced</p>
-        <h2 class="text-2xl font-bold text-green-700">2.4 Tons</h2>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow">
-        <p class="text-gray-500 text-sm">Carbon Credits</p>
-        <h2 class="text-2xl font-bold text-green-700">18 Credits</h2>
-      </div>
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Solar Voltage</p>
+      <h2 id="voltage" class="text-2xl font-bold text-green-700">--</h2>
     </div>
 
-    <!-- Graphs -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow">
-        <h3 class="font-semibold mb-4">Solar Energy Generation</h3>
-        <canvas id="energyChart"></canvas>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow">
-        <h3 class="font-semibold mb-4">CO₂ Reduction Over Time</h3>
-        <canvas id="co2Chart"></canvas>
-      </div>
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Solar Current</p>
+      <h2 id="current" class="text-2xl font-bold text-green-700">--</h2>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Soil Moisture</p>
+      <h2 id="soil" class="text-2xl font-bold text-green-700">--</h2>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Air Quality</p>
+      <h2 id="air" class="text-2xl font-bold text-green-700">--</h2>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Temperature</p>
+      <h2 id="temp" class="text-2xl font-bold text-green-700">--</h2>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow">
+      <p class="text-gray-500">Humidity</p>
+      <h2 id="humidity" class="text-2xl font-bold text-green-700">--</h2>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow md:col-span-2">
+      <p class="text-gray-500">Tree Diameter</p>
+      <h2 id="tree" class="text-2xl font-bold text-green-700">--</h2>
     </div>
 
   </main>
 
-  <!-- Charts -->
+  <!-- ThingSpeak Integration -->
   <script>
-    new Chart(document.getElementById('energyChart'), {
-      type: 'line',
-      data: {
-        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        datasets: [{
-          label: 'kWh Generated',
-          data: [12, 18, 15, 22, 28, 30, 35],
-          borderWidth: 2,
-          tension: 0.4
-        }]
-      }
-    });
+    const CHANNEL_ID = "3215386";
+    const READ_API_KEY = "HTT0XB0BJS6CLG8Z";
 
-    new Chart(document.getElementById('co2Chart'), {
-      type: 'line',
-      data: {
-        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        datasets: [{
-          label: 'CO₂ Reduced (kg)',
-          data: [5, 8, 6, 10, 14, 16, 20],
-          borderWidth: 2,
-          tension: 0.4
-        }]
+    const API_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds/last.json?api_key=${READ_API_KEY}`;
+
+    async function loadIoTData() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        document.getElementById("voltage").innerText  = data.field1 + " V";
+        document.getElementById("current").innerText  = data.field2 + " A";
+        document.getElementById("soil").innerText     = data.field3 + " %";
+        document.getElementById("air").innerText      = data.field4 + " AQI";
+        document.getElementById("temp").innerText     = data.field5 + " °C";
+        document.getElementById("humidity").innerText = data.field6 + " %";
+        document.getElementById("tree").innerText     = data.field7 + " cm";
+
+      } catch (error) {
+        console.error("ThingSpeak data error:", error);
       }
-    });
+    }
+
+    // Initial load
+    loadIoTData();
+
+    // Refresh every 15 seconds
+    setInterval(loadIoTData, 15000);
   </script>
 
 </body>
